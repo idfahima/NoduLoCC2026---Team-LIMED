@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+outputs/
+metadata_cache.json
+.ipynb_checkpoints/

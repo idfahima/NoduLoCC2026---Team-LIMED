@@ -1,0 +1,89 @@
+seed: 42
+output_root: outputs
+
+data:
+  root_dir: .
+  classification_csv: classification_labels.csv
+  localization_csv: localization_labels.csv
+  nih_dir: nih_filtered_images
+  lidc_dir: lidc_png_16_bit
+  cache_metadata: true
+  image_size: 518
+  num_workers: 8
+  held_out_fraction: 0.20  # 20% of annotated+neg for val; pos_unknown stays entirely in training
+model:
+  backbone_name: medical_rad_dino
+  pretrained: true
+  heatmap_head_channels: 256
+  heatmap_sigma: 4.0
+
+training:
+  folds: 5
+  mixed_precision: true
+
+phase1:
+  epochs: 30  # 0 = skip phase 1 training, reuse existing classifier soup from outputs/soups/classifier_soup.pt
+  batch_size: 32
+  batches_per_epoch: 0
+  lr: 0.00002
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  early_stopping_patience: 5
+  soup_max_checkpoints: 5
+  neg_subsample_fraction: 0.25  # fraction of negatives drawn per epoch; refreshed each epoch
+  positive_target: 0.9
+  negative_target: 0.05
+  asl_gamma_neg: 4.0
+  asl_gamma_pos: 1.0
+  asl_clip: 0.05
+  asl_eps: 0.00000001
+
+phase2:
+  epochs: 40
+  batch_size: 32
+  batches_per_epoch: 0
+  lr: 0.0005
+  weight_decay: 0.005
+  grad_clip_norm: 1.0
+  early_stopping_patience: 10
+  soup_max_checkpoints: 5
+  neg_subsample_fraction: 0.25
+  freeze_classifier_head: True
+  freeze_encoder: True
+  annotated_loss: focal_heatmap
+  annotated_loss_weight: 1.0
+  negative_loss_weight: 3.0
+  weak_loss_weight: 0.0
+  weak_warmup_epochs: 0
+  weak_ramp_epochs: 7
+  cam_peak_threshold: 0.4
+  cam_nms_kernel: 7
+  asl_gamma_neg: 4.0
+  asl_gamma_pos: 1.0
+  asl_clip: 0.05
+  asl_eps: 0.00000001
+
+augmentation:
+  rotation_limit: 10
+  clahe_clip_limit: 2.0
+  clahe_tile_grid_size: 8
+  brightness_limit: 0.12
+  contrast_limit: 0.12
+  blur_prob: 0.05
+  horizontal_flip_prob: 0.5
+
+inference:
+  # Threshold selected to maximise mean(F1, precision, recall, accuracy) on the full dataset.
+  # Use 0.75 for the best raw F1 score.
+  presence_threshold: 0.719
+  peak_threshold: 0.25
+  nms_kernel: 7
+  max_detections_per_image: 8
+
+evaluation:
+  search_threshold: true
+  max_eval_samples: 2048        # phase 1 val cap (all positives kept first)
+  soup_max_eval_samples: 6300   # ~10% of dataset for classifier soup eval
+  phase2_eval_max_negatives: 512          # per-fold phase 2 val: all annotated + N negatives
+  soup_phase2_eval_max_negatives: 2048    # soup phase 2 val: pooled annotated + N negatives
+  negative_peak_penalty: 0.1
