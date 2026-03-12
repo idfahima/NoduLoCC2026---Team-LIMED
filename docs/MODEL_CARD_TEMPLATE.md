@@ -22,17 +22,17 @@ Two-phase fine-tuning of a RadDINO (microsoft/rad-dino) backbone on chest X-rays
 
 ## Hardware
 
-- 1 × NVIDIA Tesla P100 (16 GB)
+- RTX 4090
 
 ## Training time
 
-- Phase 1 (5-fold classifier): ~6 h per fold → ~30 h total
-- Phase 2 (5-fold localizer): ~5 h per fold → ~25 h total
-- Total end-to-end: ~55 h
+- Phase 1 (5-fold classifier): ~2 h per fold → ~10 h total
+- Phase 2 (5-fold localizer): ~1 h per fold → ~5 h total
+- Total end-to-end: ~15 h
 
 ## Inference time
 
-- ~0.35 s per image on GPU (Tesla P100).
+- Approximately 32-42 ms| 25-30 im/sec
 
 ## Parameter count
 
